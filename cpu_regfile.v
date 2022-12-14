@@ -32,7 +32,7 @@ module regfile(
     input [31:0] wdata,
 
     //for program out
-    output [31:0] reg_16
+    output [31:0] reg_28
     );
     
     (* KEEP = "{TRUE|FALSE|SOFT}" *) reg [31:0] array_reg[31:0]; //regfiles
@@ -81,5 +81,5 @@ module regfile(
     assign rdata2=array_reg[raddr2];
 
     //for program out
-    assign reg_16=array_reg[16];
+    assign reg_28=array_reg[28];
 endmodule

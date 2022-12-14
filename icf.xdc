@@ -50,6 +50,6 @@ set_output_delay -clock [get_clocks *] 0.000 [get_ports -filter { NAME =~  "*" &
 set_property IOSTANDARD LVCMOS33 [get_ports cpu_stall]
 set_property PACKAGE_PIN J15 [get_ports cpu_stall]
 
-set_property IOSTANDARD LVCMOS33 [get_ports switch_pc_d]
-set_property PACKAGE_PIN V10 [get_ports switch_pc_d]
+#set_property IOSTANDARD LVCMOS33 [get_ports switch_pc_d]
+#set_property PACKAGE_PIN V10 [get_ports switch_pc_d]
 

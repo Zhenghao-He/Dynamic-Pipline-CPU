@@ -27,14 +27,15 @@ module cpu_tb();
     wire [31:0] reg_16;
     reg cpu_stall;
 
-    top_parts uut(
+    sccomp_dataflow uut(
         clk,  //posedge write-active
         reset,    //active-high asynchronous
+        cpu_stall,
         pc,
         inst,
 
-        reg_16,
-        cpu_stall
+        reg_16
+        
     );
 
 //    assign reg_16=cpu_tb.uut.id_inst.cpu_ref.array_reg[16];

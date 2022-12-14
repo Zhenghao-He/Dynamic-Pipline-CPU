@@ -30,8 +30,8 @@ module sccomp_dataflow(
     assign inst=if_IR;
     assign npc_ext = ext_out+if_NPC;
     instruction_fetch if_inst(
-        .clk(clk),  //posedge write-active
-        .reset(reset),    //active-high asynchronous
+        .clk(clk),  
+        .reset(reset),    
         .connect(connect),
         .npc_ext(npc_ext),
         .regfile_Rs(regfile_Rs),
@@ -52,8 +52,8 @@ module sccomp_dataflow(
         .reset(reset),
         .if_IR(if_IR),
         .if_NPC(if_NPC),
-        .regfile_Rdc(regfile_Rdc),    //also cp0
-        .regfile_Rd(regfile_Rd),    //also cp0
+        .regfile_Rdc(regfile_Rdc),   
+        .regfile_Rd(regfile_Rd),   
         .Rd_out_for_LO(Rd_out_for_LO),
         .rALUa(id_ALUa),
         .rALUb(id_ALUb),

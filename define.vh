@@ -14,7 +14,7 @@
 `define CAL_DIVU 2'b10
 `define CAL_DIV 2'b11
 
-//----------ALU----------
+////----------ALU----------
 
 `define ALU_ADDU 4'b0000
 `define ALU_ADD 4'b0010
@@ -33,11 +33,6 @@
 `define ALU_SRL 4'b1101
 `define ALU_CLZ 4'b1001
 
-//----------CP0----------
-
-`define EXC_SYSCALL 4'b1000
-`define EXC_BREAK 4'b1001
-`define EXC_TEQ 4'b1101
 
 //----------Extend----------
 

@@ -1,28 +1,4 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2021/05/20 18:14:16
-// Design Name: 
-// Module Name: ext5_z
-//              ext16_sz
-//              ext16sl2_s
-//              ext_byte/hword_sz
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Revision 1.01 - Altered
-// direct input from iData_type
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
 
 `include "define.vh"
 

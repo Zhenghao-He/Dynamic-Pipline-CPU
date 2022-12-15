@@ -26,7 +26,8 @@ module cpu_tb();
     reg [31:0] pc_history[0:4],inst_history[0:4];
     wire [31:0] reg_16;
     reg cpu_stall;
-
+    wire [53:0] decoded_instr;
+    assign decoded_instr=uut.id_inst.controller_id.decoded_instr;
     sccomp_dataflow uut(
         clk,  //posedge write-active
         reset,    //active-high asynchronous

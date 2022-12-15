@@ -20,7 +20,8 @@ module sccomp_dataflow(
     wire [31:0] connect,npc_ext,regfile_Rs,cp0_EPC,cp0_intr_addr;
     wire [31:0] if_NPC,if_IR;
     wire hi_w,lo_w,cp0_w,regfile_w;
-    wire [4:0] regfile_Rdc;wire [31:0] regfile_Rd,Rd_out_for_LO;
+    wire [4:0] regfile_Rdc;
+    wire [31:0] regfile_Rd,Rd_out_for_LO;
     wire [31:0] id_ALUa,id_ALUb,id_Rt,id_IR,ext_out;
     wire [31:0] me_HI,me_LO,me_Z,me_MEM,me_IR;
     wire ex_from_mem,me_from_mem;
@@ -29,9 +30,48 @@ module sccomp_dataflow(
     wire mult_div_stall,cal_finish,overflow_stall;
     assign inst=if_IR;
     assign npc_ext = ext_out+if_NPC;
+    
+    
+    flow_control flow_control_inst(
+        .clk(clk),
+        .reset(reset),
+        .raddr1(flow_raddr1),
+        .raddr2(flow_raddr2),
+        .waddr1(flow_waddr1),
+        .waddr2(flow_waddr2),
+        .waddr3(flow_waddr3),
+        .mult_div_stall(mult_div_stall),
+        .mult_div_over(cal_finish),
+        .overflow_stall(overflow_stall),
+        .cond0(cond0),
+        .cond1(cond1),
+        .cond2(cond2),
+        .cond3(cond3),
+        .cond4(cond4),
+        .id_ALUa(forward_ALUa),
+        .id_ALUb(forward_ALUb),
+        .id_Rt(forward_Rt),
+        .id_ALUa_w(forward_ALUa_w),
+        .id_ALUb_w(forward_ALUb_w),
+        .id_Rt_w(forward_Rt_w),
+        .ex_HI(ex_HI),
+        .ex_LO(ex_LO),
+        .ex_Z(ex_Z),
+        .ex_from_mem(ex_from_mem),
+        .ex_mul(ex_mul),
+        .me_HI(me_HI),
+        .me_LO(me_LO),
+        .me_Z(me_Z),
+        .me_MEM(me_MEM),
+        .me_from_mem(me_from_mem),
+        .me_mul(me_mul),
+        .cpu_stall(cpu_stall)
+    );
+    
+    
     instruction_fetch if_inst(
-        .clk(clk),  //posedge write-active
-        .reset(reset),    //active-high asynchronous
+        .clk(clk),  
+        .reset(reset),    
         .connect(connect),
         .npc_ext(npc_ext),
         .regfile_Rs(regfile_Rs),
@@ -52,8 +92,8 @@ module sccomp_dataflow(
         .reset(reset),
         .if_IR(if_IR),
         .if_NPC(if_NPC),
-        .regfile_Rdc(regfile_Rdc),    //also cp0
-        .regfile_Rd(regfile_Rd),    //also cp0
+        .regfile_Rdc(regfile_Rdc),   
+        .regfile_Rd(regfile_Rd),   
         .Rd_out_for_LO(Rd_out_for_LO),
         .rALUa(id_ALUa),
         .rALUb(id_ALUb),
@@ -99,12 +139,10 @@ module sccomp_dataflow(
         .rRt(ex_Rt),
         .rIR(ex_IR),
         .cond(cond2),
-        .mult_div_stall(mult_div_stall),   //cause controller to stall 32 periods
+        .mult_div_stall(mult_div_stall),   
         .cal_finish(cal_finish),
         .overflow_stall(overflow_stall),
         .flow_waddr(flow_waddr1),
-
-        //for program in
         .cpu_stall(cpu_stall)
     );
 
@@ -150,17 +188,4 @@ module sccomp_dataflow(
         .use_mul(me_mul)
     );
 
-    flow_control flow_control_inst(
-        .clk(clk),.reset(reset),
-        .raddr1(flow_raddr1),.raddr2(flow_raddr2),.waddr1(flow_waddr1),.waddr2(flow_waddr2),.waddr3(flow_waddr3),
-        .mult_div_stall(mult_div_stall),.mult_div_over(cal_finish),.overflow_stall(overflow_stall),
-        /*-----------flow_control-----------*/
-        .cond0(cond0),.cond1(cond1),.cond2(cond2),.cond3(cond3),.cond4(cond4),
-        /*-----------flow_data-----------*/
-        .id_ALUa(forward_ALUa),.id_ALUb(forward_ALUb),.id_Rt(forward_Rt),.id_ALUa_w(forward_ALUa_w),.id_ALUb_w(forward_ALUb_w),.id_Rt_w(forward_Rt_w),
-        .ex_HI(ex_HI),.ex_LO(ex_LO),.ex_Z(ex_Z),.ex_from_mem(ex_from_mem),.ex_mul(ex_mul),
-        .me_HI(me_HI),.me_LO(me_LO),.me_Z(me_Z),.me_MEM(me_MEM),.me_from_mem(me_from_mem),.me_mul(me_mul),
-        //for program in
-        .cpu_stall(cpu_stall)
-    );
 endmodule

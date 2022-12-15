@@ -14,24 +14,6 @@
 `define CAL_DIVU 2'b10
 `define CAL_DIV 2'b11
 
-////----------ALU----------
-
-`define ALU_ADDU 4'b0000
-`define ALU_ADD 4'b0010
-`define ALU_SUBU 4'b0001
-`define ALU_SUB 4'b0011
-`define ALU_AND 4'b0100
-`define ALU_OR 4'b0101
-`define ALU_XOR 4'b0110
-`define ALU_NOR 4'b0111
-`define ALU_LUI 4'b1000
-`define ALU_SLT 4'b1011
-`define ALU_SLTU 4'b1010
-`define ALU_SRA 4'b1100
-`define ALU_SLL 4'b1110
-`define ALU_SLA 4'b1111
-`define ALU_SRL 4'b1101
-`define ALU_CLZ 4'b1001
 
 
 //----------Extend----------
@@ -90,9 +72,9 @@
 //----------Others----------
 
 //judge read/write violation
-`define VIOLATION_REGFILE_HEAD 2'b00
-`define VIOLATION_CP0REG_HEAD 2'b01
-`define VIOLATION_HI 7'b100_0000
-`define VIOLATION_LO 7'b100_0001
-`define VIOLATION_HILO 7'b100_0010
-`define VIOLATION_NON 7'b110_0000
+//`define VIOLATION_REGFILE_HEAD 2'b00
+//`define VIOLATION_CP0REG_HEAD 2'b01
+//`define VIOLATION_HI 7'b100_0000
+//`define VIOLATION_LO 7'b100_0001
+//`define VIOLATION_HILO 7'b100_0010
+//`define VIOLATION_NON 7'b110_0000

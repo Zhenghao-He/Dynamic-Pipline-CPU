@@ -27,6 +27,12 @@ module cpu_tb();
     wire [31:0] reg_16;
     reg cpu_stall;
     wire [53:0] decoded_instr;
+    wire [6:0] waddr;
+    wire [6:0] waddr1;
+    wire [6:0] t_wa;
+    assign waddr=uut.id_inst.controller_id.waddr;
+    assign waddr1=uut.id_inst.controller_id.waddr1;
+    assign t_wa=waddr-waddr1;
     assign decoded_instr=uut.id_inst.controller_id.decoded_instr;
     sccomp_dataflow uut(
         clk,  //posedge write-active

@@ -1,155 +1,134 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2021/06/28 12:29:39
-// Design Name: 
-// Module Name: calculator
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// posedge calculate
-//////////////////////////////////////////////////////////////////////////////////
-
 `include "define.vh"
 
 module calculator(
     input clk,
-    input [31:0] a, //multiplicand/dividend
-    input [31:0] b, //multiplier/divisor
+    input rst,     
+    input ena,  
+    input [31:0] a,
+    input [31:0] b,
     input [1:0] calc,
-    input reset,      //high-active,at the beginning of test
-    input ena,  //high-active
+    
     output reg [31:0] oLO,
     output reg [31:0] oHI,
     output reg sum_finish,
-
-    //for program in
     input cpu_stall
     );
 
-    wire cal_clk=~clk;
-    reg start,busy;
-    wire busyDivu,busyDiv,busyMult,busyMultu,finishDivu,finishDiv,finishMult,finishMultu;
-    wire [63:0] oMult,oMultu,oDiv,oDivu;
+    wire clock;
+    reg Start_sig;
+    reg busy;
+    wire b_Mul;
+    wire b_Mulu;
+    wire b_Divu;
+    wire b_Div;
 
-    reg [1:0] inner_calc;
-    always @(negedge clk) begin
-        inner_calc<=calc;
-    end
+    wire f_Mul;
+    wire f_Mulu;
+    wire f_Divu;
+    wire f_Div;
+    wire Start_sig_mult;
+    wire Start_sig_multu;
+    wire Start_sig_div;
+    wire Start_sig_divu;
+    
+    wire [63:0] res_Mul,res_Mulu,res_Div,res_Divu;
+    
+    reg [1:0] calc_2;
 
-    always @(*) begin
-        case (inner_calc)
-            `CAL_MULTU: begin
-                oLO<=oMultu[31:0];
-                oHI<=oMultu[63:32];
-                sum_finish<=finishMultu;
-            end
-            `CAL_MULT: begin
-                oLO<=oMult[31:0];
-                oHI<=oMult[63:32];
-                sum_finish<=finishMult;
-            end
-            `CAL_DIVU: begin
-                oLO<=oDivu[31:0];
-                oHI<=oDivu[63:32];
-                sum_finish<=finishDivu;
-            end
-            `CAL_DIV: begin
-                oLO<=oDiv[31:0];
-                oHI<=oDiv[63:32];
-                sum_finish<=finishDiv;
-            end
-            default: begin end
-        endcase
-    end
+    assign Start_sig_mult=Start_sig&&(calc==`MUL);
+    assign Start_sig_multu=Start_sig&&(calc==`MULU);
+    assign Start_sig_div=Start_sig&&(calc==`DIV);
+    assign Start_sig_divu=Start_sig&&(calc==`DIVU);
+    assign clock=~clk;
 
-        always @(*) begin
-        case (calc)
-            `CAL_MULTU: begin
-                busy<=busyMultu;
-            end
-            `CAL_MULT: begin
-                busy<=busyMult;
-            end
-            `CAL_DIVU: begin
-                busy<=busyDivu;
-            end
-            `CAL_DIV: begin
-                busy<=busyDiv;
-            end
-            default: begin end
-        endcase
-    end
+    DIVU divu(.dividend(a),.divisor(b),.start(Start_sig_divu),.clock(clock),.reset(rst),.q(res_Divu[31:0]),.r(res_Divu[63:32]),.busy(b_Divu),.finish(f_Divu),.cpu_stall(cpu_stall));
+    DIV div(.dividend(a),.divisor(b),.start(Start_sig_div),.clock(clock),.reset(rst),.q(res_Div[31:0]),.r(res_Div[63:32]),.busy(b_Div),.finish(f_Div),.cpu_stall(cpu_stall));
+    MULTU mulu(.clk(clock),.reset(rst),.start(Start_sig_multu),.a(a),.b(b),.z(res_Mulu),.busy(b_Mulu),.finish(f_Mulu),.cpu_stall(cpu_stall));
+    MULT mul(.clk(clock),.reset(rst),.start(Start_sig_mult),.a(a),.b(b),.z(res_Mul),.busy(b_Mul),.finish(f_Mul),.cpu_stall(cpu_stall));
+    
 
-    always @(posedge ena or posedge busy or posedge reset) begin
-        if (reset) begin
-            start<=0;
-        end else begin
+
+    always @(posedge ena or posedge busy or posedge rst) 
+    begin
+        if (rst) 
+        begin
+            Start_sig=0;
+        end 
+        else 
+        begin
             if (busy) 
-                start<=0;
+                Start_sig=0;
             else if(ena)
-                start<=1;
+                Start_sig=1;
         end
     end
+    always @(negedge clk) 
+    begin
+        calc_2=calc;
+    end
 
-    (* KEEP = "{TRUE|FALSE|SOFT}" *) wire start_mult,start_multu,start_div,start_divu;
-    assign start_mult=start&&(calc==`CAL_MULT);
-    assign start_multu=start&&(calc==`CAL_MULTU);
-    assign start_div=start&&(calc==`CAL_DIV);
-    assign start_divu=start&&(calc==`CAL_DIVU);
-    MULT MULT_inst(
-        .clk(cal_clk),
-        .reset(reset),    //active high
-        .start(start_mult),
-        .a(a), //multiplicand
-        .b(b), //multiplier
-        .z(oMult),
-        .busy(busyMult),
-        .finish(finishMult),
-        .cpu_stall(cpu_stall)
-    );
-    MULTU MULTU_inst(
-        .clk(cal_clk),
-        .reset(reset),    //active high
-        .start(start_multu),
-        .a(a), //multiplicand
-        .b(b), //multiplier
-        .z(oMultu),
-        .busy(busyMultu),
-        .finish(finishMultu),
-        .cpu_stall(cpu_stall)
-    );
-    DIV DIV_inst(
-        .dividend(a),
-        .divisor(b),
-        .start(start_div),
-        .clock(cal_clk),
-        .reset(reset),    //active-high
-        .q(oDiv[31:0]),
-        .r(oDiv[63:32]),
-        .busy(busyDiv),
-        .finish(finishDiv),
-        .cpu_stall(cpu_stall)
-    );
-    DIVU DIVU_inst(
-        .dividend(a),
-        .divisor(b),
-        .start(start_divu),
-        .clock(cal_clk),
-        .reset(reset),    //active-high
-        .q(oDivu[31:0]),
-        .r(oDivu[63:32]),
-        .busy(busyDivu),
-        .finish(finishDivu),
-        .cpu_stall(cpu_stall)
-    );
+    always @(*) 
+    begin
+        case (calc)
+            `MULU: 
+            begin
+                busy=b_Mulu;
+            end
+            `MUL: 
+            begin
+                busy=b_Mul;
+            end
+            `DIVU: 
+            begin
+                busy=b_Divu;
+            end
+            `DIV: 
+            begin
+                busy=b_Div;
+            end
+            default: 
+            begin 
+
+            end
+        endcase
+    end
+
+    always @(*) 
+    begin
+        case (calc_2)
+            `MULU: 
+            begin
+                oLO=res_Mulu[31:0];
+                oHI=res_Mulu[63:32];
+                sum_finish=f_Mulu;
+            end
+            `MUL: 
+            begin
+                oLO=res_Mul[31:0];
+                oHI=res_Mul[63:32];
+                sum_finish=f_Mul;
+            end
+            `DIVU: 
+            begin
+                oLO=res_Divu[31:0];
+                oHI=res_Divu[63:32];
+                sum_finish=f_Divu;
+            end
+            `DIV: 
+            begin
+                oLO=res_Div[31:0];
+                oHI=res_Div[63:32];
+                sum_finish=f_Div;
+            end
+            default: 
+            begin 
+
+            end
+        endcase
+    end
+
+
+
+   
 endmodule

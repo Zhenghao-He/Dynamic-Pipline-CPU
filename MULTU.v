@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2021/03/30 08:40:33
+// Create Date: 2022/03/19 18:24:49
 // Design Name: 
 // Module Name: MULTU
 // Project Name: 
@@ -15,10 +15,10 @@
 // 
 // Revision:
 // Revision 0.01 - File Created
-// Revision 1.01 - multi periods
 // Additional Comments:
-// testing
+// 
 //////////////////////////////////////////////////////////////////////////////////
+/**/
 
 module MULTU(
     input clk,
@@ -34,49 +34,57 @@ module MULTU(
     input cpu_stall
     );
     
-    reg [5:0] cnt;
-    reg [31:0] multa,multb;
-    reg [31:0] multpart;
-    reg shiftr;
-    wire cf;
-    wire [31:0] add;
-    
-    assign z={multpart,multb};
-    assign {cf,add}={1'b0,multpart}+{1'b0,(multb[0]?multa:32'b0)};
+//    reg [5:0] cnt;
+//    reg [31:0] multa,multb;
+//    reg [31:0] multpart;
+//    reg shiftr;
+//    wire cf;
+//    wire [31:0] add;
+        reg [63:0] temp;
+    reg [63:0]temp_a;
+    reg [31:0] temp_b;
+    integer cnt=0;
+assign z=temp;
     always@(posedge clk or posedge reset)
     begin
         if(reset) begin
             cnt<=0;
-            multa<=0;
-            multb<=0;
-            multpart<=0;
+
             busy<=0;
             finish<=0;
         end
         else begin
             if(start) begin
-                cnt<=1;
-                multa<=a;
-                multb<=b;
-                multpart<=0;
+                cnt<=0;
+        temp<=0;
+            temp_a<={32'b0,a};//无符号加0
+            temp_b<=b;
+
                 busy<=1;
                 finish<=0;
             end else if(busy) begin
                 if (!cpu_stall) begin
-                    case(cnt)
-                        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31: begin
-                            {multpart,multb,shiftr}<={cf,add,multb};
-                            cnt<=cnt+1;
-                            finish<=0;
-                        end
-                        32: begin
-                            {multpart,multb,shiftr}<={cf,add,multb};
-                            cnt<=cnt+1;
+                  temp<=0;
+         temp_a<={32'b0,a};//无符号加0
+         temp_b<=b;
+         cnt<=0;
+                    for(cnt=0;cnt<32;cnt=cnt+1)
+               begin
+                  
+                   if(temp_b[0])
+                   begin
+                       temp=temp+temp_a;
+                   end
+                   else
+                   begin
+                   end
+                   temp_b=temp_b>>1;
+                   temp_a=temp_a << 1;
+               end
+                            
                             busy<=0;
                             finish<=1;
-                        end
-                        default: begin end
-                    endcase
+                        
                 end
             end
             else

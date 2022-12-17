@@ -3,25 +3,28 @@
 `include "define.vh"
 
 module ext(
-    input [2:0] ext_switch,
+    input [2:0] ent_sig,
 
-    input [4:0] iData_len5,
-    input [7:0] iData_len8,
-    input [15:0] iData_len16,
-    input [31:0] iData_len32,
-    output reg [31:0] oData
+    input [4:0] data5,
+    input [7:0] data8,
+    input [15:0] data16,
+    input [31:0] data32,
+    output reg [31:0] data_out
 );
 
 always @(*) begin
-    case (ext_switch)
-        `EXT5_Z: oData<={27'b0,iData_len5};
-        `EXT16_SL2_S: oData=iData_len16[15]?{14'h3fff,iData_len16,2'b0}:{14'b0,iData_len16,2'b0};
-        `EXT16_Z: oData<={16'b0,iData_len16};
-        `EXT16_S: oData<={{16{iData_len16[15]}},iData_len16};
-        `EXT8_Z: oData<={24'b0,iData_len8};
-        `EXT8_S: oData<={{24{iData_len8[7]}},iData_len8};
-        `EXT32_NON: oData<=iData_len32;
-        default: oData<=32'b0;
+    case (ent_sig)
+        `EXTEND32_NON: data_out<=data32;
+        `EXTEND8_Z: data_out<={24'b0,data8};
+        `EXTEND16_SL2_S: data_out=data16[15]?{14'h3fff,data16,2'b0}:{14'b0,data16,2'b0};
+        `EXTEND16_S: data_out<={{16{data16[15]}},data16};
+        `EXTEND5_Z: data_out<={27'b0,data5};
+        `EXTEND8_S: data_out<={{24{data8[7]}},data8};
+        `EXTEND16_Z: data_out<={16'b0,data16};    
+        default: 
+        begin
+            data_out<=32'b0;
+        end
     endcase
 end
 endmodule

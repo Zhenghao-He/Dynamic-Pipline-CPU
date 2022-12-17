@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2021/03/31 21:40:33
+// Create Date: 2022/03/21 11:51:41
 // Design Name: 
 // Module Name: MULT
 // Project Name: 
@@ -15,74 +15,81 @@
 // 
 // Revision:
 // Revision 0.01 - File Created
-// Revision 1.01 - multi periods
 // Additional Comments:
-// testing
+// 
 //////////////////////////////////////////////////////////////////////////////////
+
 
 module MULT(
     input clk,
-    input reset,    //active high
+    input reset, 
+    input [31:0] a,
+    input [31:0] b, 
     input start,
-    input [31:0] a, //multiplicand
-    input [31:0] b, //multiplier
-    output [63:0] z,
+    input cpu_stall,
+    output reg [63:0] z,
     output reg busy,
-    output reg finish,
-
-    //for program in
-    input cpu_stall
+    output reg finish
     );
-    
-    reg [5:0] cnt;
-    reg [32:0] multa,multb;
-    reg [32:0] multpart;
-    reg shiftr;
-    wire [32:0] add;
-    
-    wire [32:0] complementa;
-    assign complementa=~multa+1'b1;
-    
-    assign z={multpart,multb[32:2]};
-    assign add=multpart+(multb[1]==1?(multb[0]==1?33'b0:complementa):(multb[0]==1?multa:33'b0));
-    always@(posedge clk or posedge reset)
-    begin
-        if(reset) begin
+    reg [63:0] temp;
+       reg [63:0]temp_a;
+       reg [31:0] tempax;
+       reg [31:0] temp_b;
+       integer cnt=0;
+       always@(posedge clk or posedge reset)
+       begin
+           if(reset)
+           begin 
+               temp<=0;
+                busy=0;
+               cnt<=0;
+               finish=0;
+           end
+           else if (!cpu_stall)
+           begin
+               temp<=0;
+                busy=1;
+               if(a[31]==0&&b[31]==1)
+                   begin
+                   temp_a<={32'b11111111111111111111111111111111,b};
+                   temp_b<=a;
+                   end
+               else if(a[31]==0&&b[31]==0)
+                   begin
+                   temp_a<={32'b0,a};
+                    temp_b<=b;
+                   end
+              else if(a[31]==1&&b[31]==1)
+                  begin
+                  tempax=~(a-1);
+                  temp_b=~(b-1);
+                  temp_a<={32'b0,tempax};
+                  end
+              else
+                  begin
+                  temp_a<={32'b11111111111111111111111111111111,a};
+                  temp_b<=b;
+                  end
+             
+          
             cnt<=0;
-            multa<=0;
-            multb<=0;
-            multpart<=0;
-            busy<=0;
-            finish<=0;
-        end
-        else begin
-            if(start) begin
-                cnt<=1;
-                multa<={a[31],a};
-                multb<={b,1'b0};
-                multpart<=0;
-                busy<=1;
-                finish<=0;
-            end else if(busy) begin
-                if (!cpu_stall) begin
-                    case(cnt)
-                        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31: begin
-                            {multpart,multb,shiftr}<={add[32],add,multb};
-                            cnt<=cnt+1;
-                            finish<=0;
-                        end
-                        32: begin
-                            {multpart,multb}<={add,multb};
-                            cnt<=cnt+1;
-                            busy<=0;
-                            finish<=1;
-                        end
-                        default: begin end
-                    endcase
-                end
-            end
-            else
-                finish<=0;
-        end
-    end
-endmodule
+              for(cnt=0;cnt<32;cnt=cnt+1)
+               begin
+                  
+                   if(temp_b[0])
+                   begin
+                       temp=temp+temp_a;
+                   end
+                   else
+                   begin
+                   end
+                   temp_b=temp_b>>1;
+                   temp_a=temp_a << 1;
+               end
+               finish=1;
+               busy=0;
+           z=temp;
+           end
+       end
+      // assign z=temp;
+   endmodule

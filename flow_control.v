@@ -1,225 +1,321 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2021/11/19 11:05:11
-// Design Name: 
-// Module Name: flow_control
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// id_ALUa: Rs,HI,LO,CP0
-// id_ALUb: Rt
-// id_Rt: Rt
-//////////////////////////////////////////////////////////////////////////////////
 
 `include "define.vh"
 
 module flow_control(
-    input clk,input reset,
-    input [6:0] raddr1,input [6:0] raddr2,input [6:0] waddr1,input [6:0] waddr2,input [6:0] waddr3,
-    input mult_div_stall,input mult_div_over,input overflow_stall,
+    input clk,
+    input rst,
+    input [6:0] waddr1,
+    input [6:0] waddr2,
+    input [6:0] waddr3,
+    input [6:0] raddr1,
+    input [6:0] raddr2,
+    input overForcc,
+    input stallForcc,
+    input overstall,
+    output [1:0] cond0,
+    output [1:0] cond1,
+    output [1:0] cond2,
+    output [1:0] cond3,
+    output [1:0] cond4,
+    output [1:0] cond5,
+    input ex_mem,
+    input ex_mul,
+    input [31:0] HI,
+    input [31:0] LO,
+    input [31:0] ex_Z,
+   
+    input me_mem,
+    input me_mul,
+    input [31:0] me_HI,
+    input [31:0] me_LO,
+    input [31:0] me_Z,
+    input [31:0] me_MEM,
+   
+    input cpu_stall,
 
-    /*-----------flow_control-----------*/
-    output [1:0] cond0,output [1:0] cond1,output [1:0] cond2,output [1:0] cond3,output [1:0] cond4,
-
-    /*-----------flow_data-----------*/
-    output reg [31:0] id_ALUa,output reg [31:0] id_ALUb,output reg [31:0] id_Rt,output id_ALUa_w,output id_ALUb_w,output id_Rt_w,
-    input [31:0] ex_HI,input [31:0] ex_LO,input [31:0] ex_Z,input ex_from_mem,input ex_mul,
-    input [31:0] me_HI,input [31:0] me_LO,input [31:0] me_Z,input [31:0] me_MEM,input me_from_mem,input me_mul,
-
-    //for program in
-    input cpu_stall
+    output reg [31:0] ALUa,
+    output reg [31:0] ALUb,
+    output reg [31:0] id_Rt,
+    output ALUa_w,
+    output ALUb_w,
+    output id_Rt_w
+    
     );
 
-    reg [1:0] cond[0:4];
-    assign cond0=cond[0];
-    assign cond1=cond[1];
-    assign cond2=cond[2];
-    assign cond3=cond[3];
-    assign cond4=cond[4];
-
-    reg [1:0] state,nextstate;reg [4:0] cnt;
-    wire violation1=(waddr1!=`VIOLATION_NON)&&(raddr1==waddr1||raddr2==waddr1||(waddr1==`VIOLATION_HILO&&(raddr1==`VIOLATION_HI||raddr1==`VIOLATION_LO||raddr2==`VIOLATION_HI||raddr2==`VIOLATION_LO)));
-    wire violation2=(waddr2!=`VIOLATION_NON)&&(raddr1==waddr2||raddr2==waddr2||(waddr2==`VIOLATION_HILO&&(raddr1==`VIOLATION_HI||raddr1==`VIOLATION_LO||raddr2==`VIOLATION_HI||raddr2==`VIOLATION_LO)));
-    wire violation3=(waddr3!=`VIOLATION_NON)&&(raddr1==waddr3||raddr2==waddr3||(waddr3==`VIOLATION_HILO&&(raddr1==`VIOLATION_HI||raddr1==`VIOLATION_LO||raddr2==`VIOLATION_HI||raddr2==`VIOLATION_LO)));
-    wire violation=violation1|(violation2&ex_from_mem);
     
-    always @(posedge clk or posedge reset) begin
-        if(reset)
-            state<=`FLOW_NORMAL;
+
+    reg [1:0] cur_state,next_state;
+    reg [4:0] count;
+    reg vioForT;
+    reg [1:0] Conds[0:5];
+    wire vio;
+    wire vio1=(waddr1!=7'b110_0000)
+                    &&(raddr1==waddr1||raddr2==waddr1
+                    ||(waddr1==7'b100_0010
+                    &&(raddr1==7'b100_0000||raddr1==7'b100_0001||raddr2==7'b100_0000||raddr2==7'b100_0001)));
+    wire vio2=(waddr2!=7'b110_0000)
+                    &&(raddr1==waddr2||raddr2==waddr2
+                    ||(waddr2==7'b100_0010
+                    &&(raddr1==7'b100_0000||raddr1==7'b100_0001||raddr2==7'b100_0000||raddr2==7'b100_0001)));
+    wire vio3=(waddr3!=7'b110_0000)
+                    &&(raddr1==waddr3||raddr2==waddr3
+                    ||(waddr3==7'b100_0010
+                    &&(raddr1==7'b100_0000||raddr1==7'b100_0001||raddr2==7'b100_0000||raddr2==7'b100_0001)));
+    
+    assign vio=vio1|(vio2&ex_mem);
+    assign cond0=Conds[0];
+    assign cond1=Conds[1];
+    assign cond2=Conds[2];
+    assign cond3=Conds[3];
+    assign cond4=Conds[4];
+    assign cond5=Conds[5];
+    always @(posedge clk or posedge rst) 
+    begin
+        if(rst)
+            cur_state=`NORMAL;
         else
-            state<=nextstate;
+            cur_state=next_state;
     end
 
-    assign id_ALUa_w=(!violation)&&(raddr1!=`VIOLATION_NON)&&(raddr1==waddr2||raddr1==waddr3||(waddr2==`VIOLATION_HILO&&(raddr1==`VIOLATION_HI||raddr1==`VIOLATION_LO))||(waddr3==`VIOLATION_HILO&&(raddr1==`VIOLATION_HI||raddr1==`VIOLATION_LO)));
-    assign id_ALUb_w=(!violation)&&(raddr2!=`VIOLATION_NON)&&(raddr2==waddr2||raddr2==waddr3);
-    assign id_Rt_w=id_ALUb_w;
-    always @(*) begin
-        if(!violation) begin
-            if(id_ALUa_w) begin //use alua
-                if(raddr1==waddr2||(waddr2==`VIOLATION_HILO&&(raddr1==`VIOLATION_HI||raddr1==`VIOLATION_LO))) begin //use ex
-                    case (waddr2)
-                        `VIOLATION_HI: id_ALUa<=ex_HI;
-                        `VIOLATION_LO: id_ALUa<=ex_LO;
-                        `VIOLATION_HILO: begin
-                            if (raddr1==`VIOLATION_HI) 
-                                id_ALUa<=ex_HI;
-                            else
-                                id_ALUa<=ex_LO;
-                        end
-                        default: begin
-                            case (waddr2[6:5])
-                                `VIOLATION_REGFILE_HEAD: id_ALUa<=ex_Z;
-                                `VIOLATION_CP0REG_HEAD: id_ALUa<=ex_Z;
-                                default: begin end
-                            endcase
-                        end
-                    endcase
-                end
-                else begin //use me
-                    if (me_from_mem) begin
-                        id_ALUa<=me_MEM;
-                    end
-                    case (waddr2)
-                        `VIOLATION_HI: id_ALUa<=me_HI;
-                        `VIOLATION_LO: id_ALUa<=me_LO;
-                        `VIOLATION_HILO: begin
-                            if (raddr1==`VIOLATION_HI) 
-                                id_ALUa<=me_HI;
-                            else
-                                id_ALUa<=me_LO;
-                        end
-                        default: begin
-                            case (waddr2[6:5])
-                                `VIOLATION_REGFILE_HEAD: id_ALUa<=me_Z;
-                                `VIOLATION_CP0REG_HEAD: id_ALUa<=me_Z;
-                                default: begin end
-                            endcase
-                        end
-                    endcase
-                end
-            end
+    assign ALUa_w=(!vio)
+                    &&(raddr1!=7'b110_0000)
+                    &&(raddr1==waddr2||raddr1==waddr3
+                    ||(waddr2==7'b100_0010
+                    &&(raddr1==7'b100_0000||raddr1==7'b100_0001))
+                    ||(waddr3==7'b100_0010
+                    &&(raddr1==7'b100_0000||raddr1==7'b100_0001)));
+    assign ALUb_w=(!vio)&&(raddr2!=7'b110_0000)&&(raddr2==waddr2||raddr2==waddr3);
+    assign id_Rt_w=ALUb_w;
+    
 
-            if (id_ALUb_w) begin    //use alub
-                if (raddr2==waddr2) //use ex
-                    id_ALUb<=ex_mul?ex_LO:ex_Z;
-                else begin  //use me
-                    if (me_from_mem)
-                        id_ALUb<=me_MEM;
-                    else
-                        id_ALUb<=me_mul?me_LO:me_Z;
-                end
-            end
-
-            if (id_Rt_w) begin    //use Rt
-                if (raddr2==waddr2) //use ex
-                    id_Rt<=ex_mul?ex_LO:ex_Z;
-                else begin  //use me
-                    if (me_from_mem)
-                        id_Rt<=me_MEM;
-                    else
-                        id_Rt<=me_mul?me_LO:me_Z;
-                end
-            end
-        end
-    end
-
-    always @(*) begin
-        if(cpu_stall)begin
-            cond[0]<=`PARTS_COND_STALL;  //IF
-            cond[1]<=`PARTS_COND_STALL;  //ID
-            cond[2]<=`PARTS_COND_STALL;  //EX
-            cond[3]<=`PARTS_COND_STALL;  //ME
-            cond[4]<=`PARTS_COND_STALL;  //WB
-            nextstate<=state;
-        end else begin
-            case (state)
-                `FLOW_NORMAL: begin
-                    if (overflow_stall) begin
-                        if (violation) begin
-                            cond[0]<=`PARTS_COND_FLOW;  //IF
-                            cond[1]<=`PARTS_COND_ZERO;  //ID
-                            cond[2]<=`PARTS_COND_ZERO;  //EX
-                            cond[3]<=`PARTS_COND_FLOW;  //ME
-                            cond[4]<=`PARTS_COND_FLOW;  //WB
-                            nextstate<=`FLOW_NORMAL;
-                        end else begin
-                            cond[0]<=`PARTS_COND_FLOW;  //IF
-                            cond[1]<=`PARTS_COND_FLOW;  //ID
-                            cond[2]<=`PARTS_COND_ZERO;  //EX
-                            cond[3]<=`PARTS_COND_FLOW;  //ME
-                            cond[4]<=`PARTS_COND_FLOW;  //WB
-                            nextstate<=`FLOW_NORMAL;
+    always @(*) 
+    begin
+        if(cpu_stall)
+        begin
+            next_state=cur_state;
+            Conds[0]=`COND_STALL;  
+            Conds[1]=`COND_STALL;  
+            Conds[2]=`COND_STALL;  
+            Conds[3]=`COND_STALL;  
+            Conds[4]=`COND_STALL;
+            Conds[5]=`COND_STALL;  
+            
+        end else 
+        begin
+            case (cur_state)
+                `NORMAL: 
+                begin
+                    if (overstall) 
+                    begin
+                        if (vio) 
+                        begin
+                            next_state=`NORMAL;
+                            Conds[0]=`COND_FLOW;  
+                            Conds[1]=`COND_ZERO;  
+                            Conds[2]=`COND_ZERO;  
+                            Conds[3]=`COND_FLOW;  
+                            Conds[4]=`COND_FLOW;
+                            Conds[5]=`COND_FLOW;  
+                            
+                        end 
+                        else 
+                        begin
+                            next_state=`NORMAL;
+                            Conds[0]=`COND_FLOW;  
+                            Conds[1]=`COND_FLOW;  
+                            Conds[2]=`COND_ZERO;  
+                            Conds[3]=`COND_FLOW;  
+                            Conds[4]=`COND_FLOW;
+                            Conds[5]=`COND_FLOW;  
+                            
                         end
                     end
-                    else if (!mult_div_over&mult_div_stall) begin
-                        cond[0]<=`PARTS_COND_STALL;  //IF
-                        cond[1]<=`PARTS_COND_STALL;  //ID
-                        cond[2]<=`PARTS_COND_STALL;  //EX
-                        cond[3]<=`PARTS_COND_STALL;  //ME
-                        cond[4]<=`PARTS_COND_STALL;  //WB
-                        nextstate<=`FLOW_MULDIV;
+                    else if (!overForcc&stallForcc) 
+                    begin
+                        next_state=`MULDIV;
+                        Conds[0]=`COND_STALL;  
+                        Conds[1]=`COND_STALL;  
+                        Conds[2]=`COND_STALL;  
+                        Conds[3]=`COND_STALL;  
+                        Conds[4]=`COND_STALL;
+                        Conds[5]=`COND_STALL;  
+                        
                     end
-                    else if (violation) begin
-                        cond[0]<=`PARTS_COND_STALL;  //IF
-                        cond[1]<=`PARTS_COND_ZERO;  //ID
-                        cond[2]<=`PARTS_COND_FLOW;  //EX
-                        cond[3]<=`PARTS_COND_FLOW;  //ME
-                        cond[4]<=`PARTS_COND_FLOW;  //WB
-                        nextstate<=`FLOW_NORMAL;
-                    end else begin
-                        cond[0]<=`PARTS_COND_FLOW;  //IF
-                        cond[1]<=`PARTS_COND_FLOW;  //ID
-                        cond[2]<=`PARTS_COND_FLOW;  //EX
-                        cond[3]<=`PARTS_COND_FLOW;  //ME
-                        cond[4]<=`PARTS_COND_FLOW;  //WB
-                        nextstate<=`FLOW_NORMAL;
+                    else if (vio) 
+                    begin
+                        next_state=`NORMAL;
+                        Conds[0]=`COND_STALL;  
+                        Conds[1]=`COND_ZERO;  
+                        Conds[2]=`COND_FLOW;  
+                        Conds[3]=`COND_FLOW;  
+                        Conds[4]=`COND_FLOW;
+                        Conds[5]=`COND_FLOW;  
+                        
+                    end 
+                    else 
+                    begin
+                        next_state=`NORMAL;
+                        Conds[0]=`COND_FLOW;  
+                        Conds[1]=`COND_FLOW;  
+                        Conds[2]=`COND_FLOW;  
+                        Conds[3]=`COND_FLOW;  
+                        Conds[4]=`COND_FLOW;
+                        Conds[5]=`COND_FLOW;  
+                        
                     end
                 end
-                `FLOW_MULDIV: begin
-                    if (mult_div_over) begin
-                        if (violation) begin
-                            cond[0]<=`PARTS_COND_STALL;  //IF
-                            cond[1]<=`PARTS_COND_ZERO;  //ID
-                            cond[2]<=`PARTS_COND_FLOW;  //EX
-                            cond[3]<=`PARTS_COND_FLOW;  //ME
-                            cond[4]<=`PARTS_COND_FLOW;  //WB
-                            nextstate<=`FLOW_NORMAL;
-                        end else begin
-                            cond[0]<=`PARTS_COND_FLOW;  //IF
-                            cond[1]<=`PARTS_COND_FLOW;  //ID
-                            cond[2]<=`PARTS_COND_FLOW;  //EX
-                            cond[3]<=`PARTS_COND_FLOW;  //ME
-                            cond[4]<=`PARTS_COND_FLOW;  //WB
-                            nextstate<=`FLOW_NORMAL;
+                `MULDIV: 
+                begin
+                    if (overForcc) 
+                    begin
+                        if (vio) 
+                        begin
+                            next_state=`NORMAL;
+                            Conds[0]=`COND_STALL;  
+                            Conds[1]=`COND_ZERO;  
+                            Conds[2]=`COND_FLOW;  
+                            Conds[3]=`COND_FLOW;  
+                            Conds[4]=`COND_FLOW;
+                            Conds[5]=`COND_FLOW;  
+                            
+                        end else 
+                        begin
+                            next_state=`NORMAL;
+                            Conds[0]=`COND_FLOW;  
+                            Conds[1]=`COND_FLOW;  
+                            Conds[2]=`COND_FLOW;  
+                            Conds[3]=`COND_FLOW;  
+                            Conds[4]=`COND_FLOW;
+                            Conds[5]=`COND_FLOW;  
+                            
                         end
-                    end else begin
-                        cond[0]<=`PARTS_COND_STALL;  //IF
-                        cond[1]<=`PARTS_COND_STALL;  //ID
-                        cond[2]<=`PARTS_COND_STALL;  //EX
-                        cond[3]<=`PARTS_COND_STALL;  //ME
-                        cond[4]<=`PARTS_COND_STALL;  //WB
-                        nextstate<=`FLOW_MULDIV;
+                    end 
+                    else 
+                    begin
+                        Conds[0]=`COND_STALL;  
+                        Conds[1]=`COND_STALL;  
+                        Conds[2]=`COND_STALL;  
+                        Conds[3]=`COND_STALL;  
+                        Conds[4]=`COND_STALL;
+                        Conds[5]=`COND_STALL;  
+                        next_state=`MULDIV;
                     end
                 end
-                default: begin
-                    cond[0]<=`PARTS_COND_FLOW;  //IF
-                    cond[1]<=`PARTS_COND_FLOW;  //ID
-                    cond[2]<=`PARTS_COND_FLOW;  //EX
-                    cond[3]<=`PARTS_COND_FLOW;  //ME
-                    cond[4]<=`PARTS_COND_FLOW;  //WB
-                    nextstate<=`FLOW_NORMAL;
+                default: 
+                begin
+                    next_state=`NORMAL;
+                    Conds[0]=`COND_FLOW;  
+                    Conds[1]=`COND_FLOW;  
+                    Conds[2]=`COND_FLOW;  
+                    Conds[3]=`COND_FLOW;  
+                    Conds[4]=`COND_FLOW;
+                    Conds[5]=`COND_FLOW;  
+                    
                 end
             endcase
+        end
+    end
+    always @(*) 
+    begin
+        if(!vio) 
+        begin
+            if(ALUa_w) 
+            begin
+                if(waddr2==raddr1||(waddr2==7'b100_0010&&(raddr1==7'b100_0000||raddr1==7'b100_0001))) 
+                begin
+                    case (waddr2)
+                        7'b100_0000: ALUa=HI;
+                        7'b100_0001: ALUa=LO;
+                        7'b100_0010: 
+                        begin
+                            if (raddr1==7'b100_0000) begin
+                                ALUa=HI;
+                                vioForT =0;
+                            end
+                            else begin
+                                vioForT =1;
+                                ALUa=LO;
+                            end
+                        end
+                        default: 
+                        begin
+                            case (waddr2[6:5])
+                                2'b00: 
+                                    ALUa=ex_Z;
+                                2'b01: 
+                                    ALUa=ex_Z;
+                                default: 
+                                begin 
+                                    vioForT =0;
+                                end
+                            endcase
+                        end
+                    endcase
+                end
+                else 
+                begin
+                    if (me_mem) 
+                    begin
+                        ALUa=me_MEM;
+                    end
+                    case (waddr2)
+                        7'b100_0000: ALUa=me_HI;
+                        7'b100_0001: ALUa=me_LO;
+                        7'b100_0010: 
+                        begin
+                            if (raddr1==7'b100_0000) 
+                                ALUa=me_HI;
+                            else
+                                ALUa=me_LO;
+                        end
+                        default: 
+                        begin
+                            case (waddr2[6:5])
+                                2'b00: ALUa=me_Z;
+                                2'b01: ALUa=me_Z;
+                                default: 
+                                begin end
+                            endcase
+                        end
+                    endcase
+                end
+            end
+
+            if (id_Rt_w) 
+            begin  
+                if (raddr2==waddr2) begin
+                    id_Rt=ex_mul?LO:ex_Z;
+                end
+                else 
+                begin 
+                    if (!me_mem) begin
+                        id_Rt=me_mul?me_LO:me_Z;
+                    end
+                    else begin
+                        id_Rt=me_MEM;
+                        
+                    end
+                end
+            end
+            if (ALUb_w) 
+            begin  
+                if (raddr2==waddr2) begin
+                    ALUb=ex_mul?LO:ex_Z;
+                end
+                else 
+                begin  
+                    if (!me_mem) begin
+                        ALUb=me_mul?me_LO:me_Z;
+                    end
+                    else begin
+                        ALUb=me_MEM;
+                        
+                    end
+                end
+            end
+
+            
         end
     end
 endmodule

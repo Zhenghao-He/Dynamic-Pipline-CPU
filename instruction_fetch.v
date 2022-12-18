@@ -23,64 +23,72 @@
 module instruction_fetch(
     input clk, 
     input rst,  
-
+    input [2:0] mux_pc,
     input [31:0] connect,
     input [31:0] npc_ext,
-    input [31:0] regfile_Rs,
     input [31:0] cp0_EPC,
     input [31:0] cp0_intr_addr,
-
-    output [31:0] oNPC,
-    output reg [31:0] rPC,
-    output reg [31:0] rIR,
-
-    input [1:0] cond,
-    input [2:0] mux_pc_sel
-    );
+    input [31:0] Rs,
+    input [1:0] condition,
     
-    wire [31:0] imem_out,mux_pc_out;
-    assign oNPC=rPC+32'h4;
+    output [31:0] npc,
+    output reg [31:0] IR,
+    output reg [31:0] PC
+    ); 
+    assign npc=PC+32'h4;
+    wire [31:0] res_imem,res_pc;
+            always @(posedge clk or posedge rst) 
+        begin    
+        if (rst) 
+        begin
+            PC<=32'h00400000;
+        end 
+        else 
+        begin
+            case (condition)
+                `COND_FLOW: PC<=res_pc;
+                `COND_STALL: PC<=PC;
+                `COND_ZERO: PC<=32'h00400000;
+                default: 
+                begin 
 
-    mux_len32_sel8 mux_Pc(
-        .choose(mux_pc_sel),
+                end
+            endcase
+        end
+    end
+    always @(negedge clk or posedge rst) 
+    begin    
+        if (rst) 
+        begin
+            IR<=`IR_NON;
+        end 
+        else 
+        begin
+            case (condition)
+                `COND_FLOW: IR<=res_imem;
+                `COND_STALL: IR<=IR;
+                `COND_ZERO: IR<=`IR_NON;
+                default: 
+                begin 
+
+                end
+            endcase
+        end
+    end
+
+    mux_len32_sel8 m_Pc(
+        .choose(mux_pc),
         .data1(npc_ext),
-        .data2(regfile_Rs),
+        .data2(Rs),
         .data3(cp0_intr_addr),
         .data4(cp0_EPC),
         .data5(connect),
-        .data6(oNPC),
-        .data_out(mux_pc_out)
+        .data6(npc),
+        .data_out(res_pc)
     );
 
-    imem imem_inst(
-        .addr(rPC),
-        .meminst(imem_out)
+    imem IMEM(
+        .addr(PC),
+        .meminst(res_imem)
     );
-
-
-    always @(negedge clk or posedge rst) begin    
-        if (rst) begin
-            rIR<=`IR_NON;
-        end else begin
-            case (cond)
-                `COND_FLOW: rIR<=imem_out;
-                `COND_STALL: rIR<=rIR;
-                `COND_ZERO: rIR<=`IR_NON;
-                default: begin end
-            endcase
-        end
-    end
-        always @(posedge clk or posedge rst) begin    
-        if (rst) begin
-            rPC<=`PC_ADDR_INIT;
-        end else begin
-            case (cond)
-                `COND_FLOW: rPC<=mux_pc_out;
-                `COND_STALL: rPC<=rPC;
-                `COND_ZERO: rPC<=`PC_ADDR_INIT;
-                default: begin end
-            endcase
-        end
-    end
-
 endmodule

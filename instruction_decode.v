@@ -23,204 +23,137 @@
 module instruction_decode(
     input clk,
     input rst,
-
-    input [31:0] if_IR, //to read
-    input [31:0] if_NPC,
-    input [4:0] regfile_Rdc,    //also cp0
-    input [31:0] regfile_Rd,    //also cp0,hi,lo
-    input [31:0] Rd_out_for_LO, //add for lo *only when hi also write
-
-    output reg [31:0] rALUa,
-    output reg [31:0] rALUb,
-    output reg [31:0] rRt,
-    output reg [31:0] rIR,
+    input [31:0] if_ir, 
+    input [31:0] if_npc,
+    input [4:0] rdc,    
+    input [31:0] rd,  
+    input [31:0] rdToLo, 
+    input [1:0] condition,
+    input hi_wena,
+    input lo_wena,
+    input rf_wena,
+    input cp0_wena,
+    input [31:0] f_ALUa,
+    input [31:0] f_ALUb,
+    input [31:0] f_Rt,
+    input f_ALUa_w,
+    input f_ALUb_w,
+    input f_Rt_w,
+    output reg [31:0] reg_ALUa,
+    output reg [31:0] reg_ALUb,
+    output reg [31:0] reg_Rt,
+    output reg [31:0] reg_IR,
     output [31:0] cp0_EPC,
     output [31:0] cp0_intr_addr,
     output [31:0] ext_out,
     output [31:0] connect,
-    output [31:0] regfile_Rs,
-    output [31:0] regfile_Rt,
-
-    //control signal
-    input [1:0] cond,
-    output [2:0] mux_pc_sel,
-    input hi_w,
-    input lo_w,
-    input regfile_wena,
-    input cp0_wena,
+    output [31:0] Rs,
+    output [31:0] Rt,
+    output [2:0] mux_pc,
     output [6:0] flow_raddr1,
     output [6:0] flow_raddr2,
+    output [31:0] reg_28);
 
-    //forward
-    input [31:0] forward_ALUa,
-    input [31:0] forward_ALUb,
-    input [31:0] forward_Rt,
-    input forward_ALUa_w,
-    input forward_ALUb_w,
-    input forward_Rt_w,
+    assign connect={if_npc[31:28],if_ir[25:0],2'b0};
 
-    //for program out
-    output [31:0] reg_28
-    );
+    reg [31:0] reg_HI,reg_LO;
 
-    assign connect={if_NPC[31:28],if_IR[25:0],2'b0};
+    wire mux_lo_sig;
+    wire mux_hi_sig;
+    wire [31:0] lo_res,hi_res,mux_lo_res,mux_hi_res;
+    wire [31:0] t_alua,t_alub;
+    wire [31:0] cp0_res;
+    wire [4:0] cp0_cause;
 
-    reg [31:0] rHI,rLO;
-
-    wire mux_lo_sel,mux_hi_sel;
-    wire [31:0] cal_lo_out,cal_hi_out,mux_lo_out,mux_hi_out;
-    wire [31:0] alua,alub;
-    wire [31:0] cp0_out;wire [4:0] cp0_cause;
-
-    wire [2:0] mux_ALUa;wire [1:0] mux_ALUb;wire [2:0] ext_sel;
+    wire [2:0] mux_ALUa;
+    wire [1:0] mux_ALUb;
+    wire [2:0] ext_sig;
     wire [53:0] decoded_instr;
-    wire cp0_eret,cp0_exp;
+    wire cp0_eret;
+    wire cp0_exp;
 
-    wire beq,bgez;
-    wire  cp0_ena,mfc0;
-    assign beq=((forward_ALUa_w?forward_ALUa:regfile_Rs)==(forward_ALUb_w?forward_ALUb:regfile_Rt));
-    assign bgez=(forward_ALUa_w?(forward_ALUa[31]==1'b0):(regfile_Rs[31]==1'b0));
+    wire beq;
+    wire bgez;
+    wire  cp0_ena;
+    wire mfc0;
+    assign beq=((f_ALUa_w?f_ALUa:Rs)==(f_ALUb_w?f_ALUb:Rt));
+    assign bgez=(f_ALUa_w?(f_ALUa[31]==1'b0):(Rs[31]==1'b0));
     wire [31:0]status;
     wire [4:0] cp0_addr;
-    assign cp0_addr=cp0_wena?regfile_Rdc:if_IR[15:11];
-    instr_decoder inst_de(
-        .instr_code(if_IR),
-        .decoder_ena(1),
-        .i(decoded_instr)
-    );
-    controller con_id(
-        .inst(if_IR),
-        .decoded_instr(decoded_instr),
-        .beq(beq), 
-        .bgez(bgez), 
-        .mux_pc_sel(mux_pc_sel),
-        .mux_ALUa(mux_ALUa),
-        .mux_ALUb(mux_ALUb),
-        .ext_sel(ext_sel),
-        .cp0_exp(cp0_exp),
-        .cp0_eret(cp0_eret),
-        .cp0_cause(cp0_cause),
-        .raddr1(flow_raddr1),
-        .raddr2(flow_raddr2)
-    );
+    assign cp0_addr=cp0_wena?rdc:if_ir[15:11];
+    instr_decoder inst_de(.instr_code(if_ir),.decoder_ena(1),.i(decoded_instr));
+    controller con_id(.inst(if_ir),.decoded_instr(decoded_instr),.beq(beq), .bgez(bgez), .mux_pc_sel(mux_pc),.mux_ALUa(mux_ALUa),.mux_ALUb(mux_ALUb),.ext_sel(ext_sig),.cp0_exp(cp0_exp),.cp0_eret(cp0_eret),.cp0_cause(cp0_cause),.raddr1(flow_raddr1),.raddr2(flow_raddr2));
 
-    mux_len32_sel8 m_ALUa(
-        .choose(mux_ALUa),
-        .data1(rHI),
-        .data2(rLO),
-        .data3(if_NPC),
-        .data4(regfile_Rs),
-        .data5(ext_out),
-        .data6(cp0_out),
-        .data7(32'b0),
-        .data_out(alua)
-    );
-    mux4 #(32) m_ALUb(
-        .choose(mux_ALUb),
-        .data1(32'd0),
-        .data2(regfile_Rt),
-        .data3(ext_out),
-        .data_out(alub)
-    );
-    ext ext_id(
-        .ent_sig(ext_sel),
-        .data5(if_IR[10:6]),
-        .data16(if_IR[15:0]),
-        .data_out(ext_out)
-    );
+    RF rf(.clk(clk),  .rst(rst),  .we(rf_wena),   .raddr1({27'b0,if_ir[25:21]}),.raddr2({27'b0,if_ir[20:16]}),.waddr({27'b0,rdc}),.wdata(rd),.rdata1(Rs),.rdata2(Rt),.reg_28(reg_28));
+
+    cp0 cp0_inst(.clk(clk),.rst(rst),.ena(cp0_ena),.mfc0(mfc0),.mtc0(cp0_wena),.pc(if_npc),.cp0_addr(cp0_addr),.wdata(rd), .exception(cp0_exp&&(condition==`COND_FLOW)),   .eret(cp0_eret&&(condition==`COND_FLOW)), .cause(cp0_cause),.rdata(cp0_res), .status(status), .exc_addr(cp0_EPC), .intr_addr(cp0_intr_addr));
+
+    mux_len32_sel8 m_ALUa(.choose(mux_ALUa),.data1(reg_HI),.data2(reg_LO),.data3(if_npc),.data4(Rs),.data5(ext_out),.data6(cp0_res),.data7(32'b0),.data_out(t_alua));
+    mux4 #(32) m_ALUb(.choose(mux_ALUb),.data1(32'd0),.data2(Rt),.data3(ext_out),.data_out(t_alub));
+    ext ext_id(.ent_sig(ext_sig),.data5(if_ir[10:6]),.data16(if_ir[15:0]),.data_out(ext_out));
 
 
-    RF rf(
-        .clk(clk),  
-        .rst(rst),  
-        .we(regfile_wena),   
-        .raddr1({27'b0,if_IR[25:21]}),
-        .raddr2({27'b0,if_IR[20:16]}),
-        .waddr({27'b0,regfile_Rdc}),
-        .wdata(regfile_Rd),
-        .rdata1(regfile_Rs),
-        .rdata2(regfile_Rt),
-        .reg_28(reg_28)
-    );
 
-    cp0 cp0_inst(
-        .clk(clk),
-        .rst(rst),
-        .ena(cp0_ena),
-        .mfc0(mfc0),
-        .mtc0(cp0_wena),
-        .pc(if_NPC),
-        .cp0_addr(cp0_addr),
-        .wdata(regfile_Rd), 
-        .exception(cp0_exp&&(cond==`COND_FLOW)),   
-        .eret(cp0_eret&&(cond==`COND_FLOW)), 
-        .cause(cp0_cause),
-        .rdata(cp0_out), 
-        .status(status), 
-        .exc_addr(cp0_EPC), 
-        .intr_addr(cp0_intr_addr)
-    );
-
-    always @(negedge clk or posedge rst) 
-    begin   
-        if (rst) 
-        begin
-            rIR<=`IR_NON;
-        end else 
-        begin
-            case (cond)
-                `COND_FLOW: rIR<=if_IR;
-                `COND_STALL: rIR<=rIR;
-                `COND_ZERO: rIR<=`IR_NON;
-                default: 
-                begin 
-
-                end
-            endcase
-        end
-    end
 
     always @(posedge clk or posedge rst) 
     begin
         if (rst) 
         begin
-            rALUa<=32'b0;
-            rALUb<=32'b0;
-            rRt<=32'b0;
-            rHI<=32'b0;
-            rLO<=32'b0;
+            reg_ALUa<=32'b0;
+            reg_ALUb<=32'b0;
+            reg_Rt<=32'b0;
+            reg_HI<=32'b0;
+            reg_LO<=32'b0;
         end 
         else 
         begin
-            case (cond)
+            case (condition)
                 `COND_FLOW: 
                 begin
-                    rALUa<=forward_ALUa_w?forward_ALUa:alua;
-                    rALUb<=forward_ALUb_w?forward_ALUb:alub;
-                    rRt<=forward_Rt_w?forward_Rt:regfile_Rt;
+                    reg_ALUa<=f_ALUa_w?f_ALUa:t_alua;
+                    reg_ALUb<=f_ALUb_w?f_ALUb:t_alub;
+                    reg_Rt<=f_Rt_w?f_Rt:Rt;
                 end
                 `COND_STALL: 
                 begin
-                    rALUa<=rALUa;
-                    rALUb<=rALUb;
-                    rRt<=rRt;
+                    reg_ALUa<=reg_ALUa;
+                    reg_ALUb<=reg_ALUb;
+                    reg_Rt<=reg_Rt;
                 end
                 `COND_ZERO: 
                 begin
-                    rALUa<=32'b0;
-                    rALUb<=32'b0;
-                    rRt<=32'b0;
+                    reg_ALUa<=32'b0;
+                    reg_ALUb<=32'b0;
+                    reg_Rt<=32'b0;
                 end
                 default: 
                 begin 
 
                 end
             endcase
-            rHI<=hi_w?regfile_Rd:rHI;
-            rLO<=lo_w?(hi_w?Rd_out_for_LO:regfile_Rd):rLO;
+            reg_HI<=hi_wena?rd:reg_HI;
+            reg_LO<=lo_wena?(hi_wena?rdToLo:rd):reg_LO;
         end
     end
 
-  
+    always @(negedge clk or posedge rst) 
+    begin   
+        if (rst) 
+        begin
+            reg_IR<=`IR_NON;
+        end 
+        else 
+        begin
+            case (condition)
+                `COND_FLOW: reg_IR<=if_ir;
+                `COND_STALL: reg_IR<=reg_IR;
+                `COND_ZERO: reg_IR<=`IR_NON;
+                default: 
+                begin 
+
+                end
+            endcase
+        end
+    end
 endmodule
 

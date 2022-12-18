@@ -20,8 +20,7 @@ module controller(
     cp0_cause,
     output  [3:0] aluc,
     output reg [1:0] cal_sel,
-    output reg 
-    cal_ena,
+    output reg cal_ena,
     output reg overflow,
     output reg dmem_write,
     output reg [1:0] dmemory_width,
@@ -30,7 +29,7 @@ module controller(
     output reg [1:0] mux_Rd,
     output reg hi_wena,
     output reg lo_wena,
-    output reg regfile_wena,
+    output reg rf_wena,
     output reg cp0_wena
     );
     parameter Syscall=5'b01000,Break=5'b01001,Teq=5'b01101;
@@ -105,7 +104,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[1])
@@ -130,7 +129,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[2])
@@ -155,7 +154,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[3])
@@ -180,7 +179,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[4])
@@ -205,7 +204,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[5])
@@ -230,7 +229,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[6])
@@ -255,7 +254,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[7])
@@ -280,7 +279,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[8])
@@ -305,7 +304,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[9])
@@ -330,7 +329,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[10])
@@ -355,7 +354,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[11])
@@ -380,7 +379,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[12])
@@ -405,7 +404,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[13])
@@ -430,7 +429,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[14])
@@ -455,7 +454,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[15])
@@ -480,7 +479,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[16])
@@ -505,7 +504,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[17])
@@ -530,7 +529,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[18])
@@ -555,7 +554,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[19])
@@ -580,7 +579,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[20])
@@ -605,7 +604,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[21])
@@ -630,7 +629,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[22])
@@ -655,7 +654,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[23])
@@ -680,7 +679,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[24])
@@ -705,7 +704,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[25])
@@ -730,7 +729,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[26])
@@ -755,7 +754,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[27])
@@ -780,7 +779,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[28])
@@ -805,7 +804,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end       
             else if(decoded_instr[29])
@@ -830,7 +829,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[30])
@@ -855,7 +854,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[31])
@@ -880,7 +879,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[32])
@@ -904,7 +903,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_HI;
                 hi_wena<=1'b1;
                 lo_wena<=1'b1;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[33])
@@ -928,7 +927,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_HI;
                 hi_wena<=1'b1;
                 lo_wena<=1'b1;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[34])
@@ -952,7 +951,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_LO;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[35])
@@ -976,7 +975,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_HI;
                 hi_wena<=1'b1;
                 lo_wena<=1'b1;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[36])
@@ -1001,7 +1000,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[37])
@@ -1026,7 +1025,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[38])
@@ -1051,7 +1050,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[39])
@@ -1076,7 +1075,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end        
             else if(decoded_instr[40])
@@ -1101,7 +1100,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[41])
@@ -1126,7 +1125,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end            
             else if(decoded_instr[42])
@@ -1151,7 +1150,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[43])
@@ -1176,7 +1175,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_MEM;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end          
             else if(decoded_instr[44])
@@ -1201,7 +1200,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[45])
@@ -1226,7 +1225,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b1;
             end
             else if(decoded_instr[46])
@@ -1251,7 +1250,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[47])
@@ -1276,7 +1275,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b1;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[48])
@@ -1301,7 +1300,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b1;
+                rf_wena<=1'b1;
                 cp0_wena<=1'b0;
             end         
             else if(decoded_instr[49])
@@ -1326,7 +1325,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b1;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[50])
@@ -1351,7 +1350,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[51])
@@ -1376,7 +1375,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[52])
@@ -1401,7 +1400,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
             else if(decoded_instr[53])
@@ -1426,7 +1425,7 @@ module controller(
                 mux_Rd<=`SELECT_RD_Z;
                 hi_wena<=1'b0;
                 lo_wena<=1'b0;
-                regfile_wena<=1'b0;
+                rf_wena<=1'b0;
                 cp0_wena<=1'b0;
             end
 

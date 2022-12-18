@@ -1,23 +1,5 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    13:00:18 05/03/2017 
-// Design Name: 
-// Module Name:    seg7x16 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+
 module seg7x16(
     input clk,
 	input reset,
@@ -33,7 +15,7 @@ module seg7x16(
         cnt <= 0;
       else
         cnt <= cnt + 1'b1;
- 
+     wire ax;
     wire seg7_clk = cnt[9]; 
 	 
 	 reg [2:0] seg7_addr;
@@ -45,7 +27,7 @@ module seg7x16(
 		  seg7_addr <= seg7_addr + 1'b1;
 		  
 	 reg [7:0] o_sel_r;
-	 
+	 wire bx;
 	 always @ (*)
 	   case(seg7_addr)
 		  7 : o_sel_r = 8'b01111111;
@@ -64,7 +46,7 @@ module seg7x16(
 		  i_data_store <= 0;
 		else if(cs)
 		  i_data_store <= i_data;
-		  
+	wire cx;	  
 	 reg [7:0] seg_data_r;
 	 always @ (*)
 	   case(seg7_addr)
@@ -77,11 +59,12 @@ module seg7x16(
 		  6 : seg_data_r = i_data_store[27:24];
 		  7 : seg_data_r = i_data_store[31:28];
 		endcase
-	 
+	 reg dx;
 	 reg [7:0] o_seg_r;
 	 always @ (posedge clk, posedge reset)
-	   if(reset)
+	   if(reset) begin
 		  o_seg_r <= 8'hff;
+		end
 		else
 		  case(seg_data_r)
 		    4'h0 : o_seg_r <= 8'hC0;
@@ -101,7 +84,7 @@ module seg7x16(
           4'hE : o_seg_r <= 8'h86;
           4'hF : o_seg_r <= 8'h8E;
 		  endcase
-		  
+	wire nou;	  
 	 assign o_sel = o_sel_r;
 	 assign o_seg = o_seg_r;
 
